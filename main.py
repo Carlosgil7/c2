@@ -40,14 +40,23 @@ def listProductos():
 
 @app.get("/producto/{cod}")
 def findProductos(cod:int):
+    if cod <= 0:
+        return {"error":"el codigo debe ser mayor a cero"}
     for prod in productos:
         if prod["codigo"]==cod:
             return prod
+    return {"mensaje":"producto no existe"}
 
 @app.get("/productos")
 def createProducto(cod:int,nom:str,val:float,exi:int):
+
+    nuevo_codigo = max([p["codigo"] for p in productos]) + 1 if productos else 1
+
+    if val <= 0 or exi <= 0:
+        return {"error":"valor y existencias deben ser mayores a cero"}
+
     productos.append({
-        "codigo":cod,
+        "codigo":nuevo_codigo,
         "nombre": nom,
         "valor": val,
         "existencias": exi,
@@ -56,8 +65,14 @@ def createProducto(cod:int,nom:str,val:float,exi:int):
 
 @app.post("/productos")
 def createProducto(cod:int,nom:str,val:float,exi:int):
+
+    nuevo_codigo = max([p["codigo"] for p in productos]) + 1 if productos else 1
+
+    if val <= 0 or exi <= 0:
+        return {"error":"valor y existencias deben ser mayores a cero"}
+
     productos.append({
-        "codigo":cod,
+        "codigo":nuevo_codigo,
         "nombre": nom,
         "valor": val,
         "existencias": exi,
@@ -71,8 +86,14 @@ def createProducto2(
     val:float=Body(),
     exi:int=Body(),
     ):
+
+    nuevo_codigo = max([p["codigo"] for p in productos]) + 1 if productos else 1
+
+    if val <= 0 or exi <= 0:
+        return {"error":"valor y existencias deben ser mayores a cero"}
+
     productos.append({
-        "codigo":cod,
+        "codigo":nuevo_codigo,
         "nombre": nom,
         "valor": val,
         "existencias": exi,
@@ -84,22 +105,32 @@ def updateProducto(cod:int,
     nom:str=Body(),
     val:float=Body(),
     exi:int=Body()):
+
+    if val <= 0 or exi <= 0:
+        return {"error":"valor y existencias deben ser mayores a cero"}
+
     for prod in productos:
         if prod["codigo"]==cod:
-           prod["nombre"]==nom
-           prod["valor"]==val
-           prod["existencias"]=exi
-    return productos
+            anterior = prod.copy()
+
+            prod["nombre"]=nom
+            prod["valor"]=val
+            prod["existencias"]=exi
+
+            return {
+                "antes": anterior,
+                "despues": prod
+            }
+
+    return {"error":"producto no existe"}
 
 @app.delete("/productos/{cod}")
 def deleteProducto(cod:int):
     for prod in productos:
         if prod["codigo"]==cod:
+            eliminado = prod
             productos.remove(prod)
-    return productos
-        
-                    
+            return {"eliminado": eliminado}
 
-
-
+    return {"error":"producto no existe"}
 
