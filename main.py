@@ -5,32 +5,22 @@ import os
 
 app = FastAPI()
 
-def crear_csv():
-    """Verifica si el archivo no existe, y si es así, lo crea con los encabezados."""
-    if not os.path.exists("historial.csv"):
-        print("Creando archivo CSV...")  
-        with open("historial.csv", mode="w", newline="", encoding="utf-8") as archivo:
-            writer = csv.writer(archivo)
-            writer.writerow(["fecha", "accion", "estado", "detalle"])
+ruta_csv = os.path.join(os.path.dirname(__file__), "historial.csv")
+
+if not os.path.exists(ruta_csv):
+    with open(ruta_csv, mode="w", newline="", encoding="utf-8") as archivo:
+        writer = csv.writer(archivo)
+        writer.writerow(["fecha", "accion", "estado", "detalle"])
 
 def guardar_historial(accion, estado, detalle=""):
-    """Guarda los datos en el archivo historial.csv."""
-    print(f"Guardando historial: {accion}, {estado}, {detalle}")  # Para depuración
-    try:
-        with open("historial.csv", mode="a", newline="", encoding="utf-8") as archivo:
-            writer = csv.writer(archivo)
-            writer.writerow([
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                accion,
-                estado,
-                detalle
-            ])
-        print(f"Historial guardado: {accion}, {estado}, {detalle}")  
-    except Exception as e:
-        print(f"Error al guardar historial: {e}")
-
-
-crear_csv()
+    with open(ruta_csv, mode="a", newline="", encoding="utf-8") as archivo:
+        writer = csv.writer(archivo)
+        writer.writerow([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            accion,
+            estado,
+            detalle
+        ])
 
 productos = [
     {"codigo": 1, "nombre": "esfero", "valor": 3500, "existencias": 10},
@@ -101,12 +91,10 @@ def buscar_producto_validado(cod: int):
     if cod <= 0:
         guardar_historial("buscar", "error", "codigo <= 0")
         return {"error": "El código debe ser mayor a cero"}
-
     for prod in productos:
         if prod["codigo"] == cod:
             guardar_historial("buscar", "ok", f"producto {cod} encontrado")
             return prod
-
     guardar_historial("buscar", "error", "producto no existe")
     return {"mensaje": "Producto no existe"}
 
@@ -119,24 +107,16 @@ def crear_producto_validado(
     if val <= 0 or exi <= 0:
         guardar_historial("crear", "error", "valor o existencias <= 0")
         return {"error": "El valor y las existencias deben ser mayores a cero"}
-
     nuevo_codigo = max([p["codigo"] for p in productos]) + 1 if productos else 1
-
     nuevo = {
         "codigo": nuevo_codigo,
         "nombre": nom,
         "valor": val,
         "existencias": exi,
     }
-
     productos.append(nuevo)
-
     guardar_historial("crear", "ok", f"producto {nuevo_codigo} creado")
-
-    return {
-        "mensaje": "Producto creado correctamente",
-        "producto": nuevo
-    }
+    return {"mensaje": "Producto creado correctamente", "producto": nuevo}
 
 @app.put("/productos-validado/{cod}")
 def actualizar_producto_validado(
@@ -148,23 +128,14 @@ def actualizar_producto_validado(
     if val <= 0 or exi <= 0:
         guardar_historial("actualizar", "error", "valores invalidos")
         return {"error": "El valor y las existencias deben ser mayores a cero"}
-
     for prod in productos:
         if prod["codigo"] == cod:
             antes = prod.copy()
-
             prod["nombre"] = nom
             prod["valor"] = val
             prod["existencias"] = exi
-
             guardar_historial("actualizar", "ok", f"producto {cod} actualizado")
-
-            return {
-                "mensaje": "Producto actualizado",
-                "antes": antes,
-                "despues": prod
-            }
-
+            return {"mensaje": "Producto actualizado", "antes": antes, "despues": prod}
     guardar_historial("actualizar", "error", "producto no existe")
     return {"error": "Producto no existe"}
 
@@ -174,13 +145,8 @@ def eliminar_producto_validado(cod: int):
         if prod["codigo"] == cod:
             eliminado = prod.copy()
             productos.remove(prod)
-
             guardar_historial("eliminar", "ok", f"producto {cod} eliminado")
-
-            return {
-                "mensaje": "Producto eliminado",
-                "producto": eliminado
-            }
-
+            return {"mensaje": "Producto eliminado", "producto": eliminado}
     guardar_historial("eliminar", "error", "producto no existe")
     return {"error": "Producto no existe"}
+
