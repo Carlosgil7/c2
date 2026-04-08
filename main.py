@@ -6,20 +6,29 @@ import os
 app = FastAPI()
 
 def crear_csv():
+    """Verifica si el archivo no existe, y si es así, lo crea con los encabezados."""
     if not os.path.exists("historial.csv"):
+        print("Creando archivo CSV...")  
         with open("historial.csv", mode="w", newline="", encoding="utf-8") as archivo:
             writer = csv.writer(archivo)
             writer.writerow(["fecha", "accion", "estado", "detalle"])
 
 def guardar_historial(accion, estado, detalle=""):
-    with open("historial.csv", mode="a", newline="", encoding="utf-8") as archivo:
-        writer = csv.writer(archivo)
-        writer.writerow([
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            accion,
-            estado,
-            detalle
-        ])
+    """Guarda los datos en el archivo historial.csv."""
+    print(f"Guardando historial: {accion}, {estado}, {detalle}")  # Para depuración
+    try:
+        with open("historial.csv", mode="a", newline="", encoding="utf-8") as archivo:
+            writer = csv.writer(archivo)
+            writer.writerow([
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                accion,
+                estado,
+                detalle
+            ])
+        print(f"Historial guardado: {accion}, {estado}, {detalle}")  
+    except Exception as e:
+        print(f"Error al guardar historial: {e}")
+
 
 crear_csv()
 
@@ -31,12 +40,11 @@ productos = [
 
 @app.get("/")
 def mensaje():
-    return "bienvenido a FastAPI ingeniero"
+    return "Bienvenido a FastAPI ingeniero"
 
 @app.get("/uno/")
 def mensaje3(nombre: str, edad: int):
-    return f"su nombre es {nombre} su edad es {edad}"
-
+    return f"Su nombre es {nombre}, su edad es {edad}"
 
 @app.get("/productos")
 def listProductos():
@@ -88,7 +96,6 @@ def deleteProducto(cod: int):
             return productos
     return {"mensaje": "Producto no encontrado"}
 
-
 @app.get("/productos-validado/{cod}")
 def buscar_producto_validado(cod: int):
     if cod <= 0:
@@ -102,7 +109,6 @@ def buscar_producto_validado(cod: int):
 
     guardar_historial("buscar", "error", "producto no existe")
     return {"mensaje": "Producto no existe"}
-
 
 @app.post("/productos-validado")
 def crear_producto_validado(
@@ -131,7 +137,6 @@ def crear_producto_validado(
         "mensaje": "Producto creado correctamente",
         "producto": nuevo
     }
-
 
 @app.put("/productos-validado/{cod}")
 def actualizar_producto_validado(
@@ -162,7 +167,6 @@ def actualizar_producto_validado(
 
     guardar_historial("actualizar", "error", "producto no existe")
     return {"error": "Producto no existe"}
-
 
 @app.delete("/productos-validado/{cod}")
 def eliminar_producto_validado(cod: int):
