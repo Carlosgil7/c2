@@ -46,7 +46,8 @@ def mensaje3(nombre: str, edad: int):
 
 @app.get("/productos")
 def listProductos():
-    guardar_historial("listar", "ok", "Se listaron todos los productos")
+    detalle = "\n".join([formato_producto(p, f"PRODUCTO {p['codigo']}") for p in productos])
+    guardar_historial("listar", "ok", detalle)
     return productos
 
 @app.get("/producto/{cod}")
@@ -177,4 +178,3 @@ def eliminar_producto_validado(cod: int):
             return {"mensaje": "Producto eliminado", "producto": eliminado}
     guardar_historial("eliminar", "error", "producto no existe")
     return {"error": "Producto no existe"}
-
