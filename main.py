@@ -22,6 +22,14 @@ def guardar_historial(accion, estado, detalle=""):
             detalle
         ])
 
+def formato_producto(prod: dict, titulo: str) -> str:
+    return (
+        f"{titulo}\n"
+        f"  nombre: {prod['nombre']}\n"
+        f"  valor: {prod['valor']}\n"
+        f"  existencias: {prod['existencias']}"
+    )
+
 productos = [
     {"codigo": 1, "nombre": "esfero", "valor": 3500, "existencias": 10},
     {"codigo": 2, "nombre": "cuaderno", "valor": 5000, "existencias": 15},
@@ -38,13 +46,17 @@ def mensaje3(nombre: str, edad: int):
 
 @app.get("/productos")
 def listProductos():
+    guardar_historial("listar", "ok", "Se listaron todos los productos")
     return productos
 
 @app.get("/producto/{cod}")
 def findProductos(cod: int):
     for prod in productos:
         if prod["codigo"] == cod:
+            detalle = formato_producto(prod, "CONSULTADO")
+            guardar_historial("buscar", "ok", detalle)
             return prod
+    guardar_historial("buscar", "error", f"producto {cod} no encontrado")
     return {"mensaje": "Producto no encontrado"}
 
 @app.post("/productos")
@@ -61,6 +73,8 @@ def createProducto(
         "existencias": exi,
     }
     productos.append(nuevo)
+    detalle = formato_producto(nuevo, "CREADO")
+    guardar_historial("crear", "ok", detalle)
     return productos
 
 @app.put("/productos/{cod}")
@@ -72,18 +86,27 @@ def updateProducto(
 ):
     for prod in productos:
         if prod["codigo"] == cod:
+            antes = prod.copy()
             prod["nombre"] = nom
             prod["valor"] = val
             prod["existencias"] = exi
+            despues = prod.copy()
+            detalle = f"{formato_producto(antes, 'ANTES')}\n{formato_producto(despues, 'DESPUÉS')}"
+            guardar_historial("actualizar", "ok", detalle)
             return productos
+    guardar_historial("actualizar", "error", f"producto {cod} no encontrado")
     return {"mensaje": "Producto no encontrado"}
 
 @app.delete("/productos/{cod}")
 def deleteProducto(cod: int):
     for prod in productos:
         if prod["codigo"] == cod:
+            eliminado = prod.copy()
             productos.remove(prod)
+            detalle = f"{formato_producto(eliminado, 'ANTES')}\nDESPUÉS\n  producto eliminado"
+            guardar_historial("eliminar", "ok", detalle)
             return productos
+    guardar_historial("eliminar", "error", f"producto {cod} no encontrado")
     return {"mensaje": "Producto no encontrado"}
 
 @app.get("/productos-validado/{cod}")
@@ -93,7 +116,8 @@ def buscar_producto_validado(cod: int):
         return {"error": "El código debe ser mayor a cero"}
     for prod in productos:
         if prod["codigo"] == cod:
-            guardar_historial("buscar", "ok", f"producto {cod} encontrado")
+            detalle = formato_producto(prod, "ENCONTRADO")
+            guardar_historial("buscar", "ok", detalle)
             return prod
     guardar_historial("buscar", "error", "producto no existe")
     return {"mensaje": "Producto no existe"}
@@ -115,7 +139,8 @@ def crear_producto_validado(
         "existencias": exi,
     }
     productos.append(nuevo)
-    guardar_historial("crear", "ok", f"producto {nuevo_codigo} creado")
+    detalle = formato_producto(nuevo, "CREADO")
+    guardar_historial("crear", "ok", detalle)
     return {"mensaje": "Producto creado correctamente", "producto": nuevo}
 
 @app.put("/productos-validado/{cod}")
@@ -126,7 +151,7 @@ def actualizar_producto_validado(
     exi: int = Body()
 ):
     if val <= 0 or exi <= 0:
-        guardar_historial("actualizar", "error", "valores invalidos")
+        guardar_historial("actualizar", "error", "valores inválidos")
         return {"error": "El valor y las existencias deben ser mayores a cero"}
     for prod in productos:
         if prod["codigo"] == cod:
@@ -134,8 +159,10 @@ def actualizar_producto_validado(
             prod["nombre"] = nom
             prod["valor"] = val
             prod["existencias"] = exi
-            guardar_historial("actualizar", "ok", f"producto {cod} actualizado")
-            return {"mensaje": "Producto actualizado", "antes": antes, "despues": prod}
+            despues = prod.copy()
+            detalle = f"{formato_producto(antes, 'ANTES')}\n{formato_producto(despues, 'DESPUÉS')}"
+            guardar_historial("actualizar", "ok", detalle)
+            return {"mensaje": "Producto actualizado", "antes": antes, "despues": despues}
     guardar_historial("actualizar", "error", "producto no existe")
     return {"error": "Producto no existe"}
 
@@ -145,7 +172,8 @@ def eliminar_producto_validado(cod: int):
         if prod["codigo"] == cod:
             eliminado = prod.copy()
             productos.remove(prod)
-            guardar_historial("eliminar", "ok", f"producto {cod} eliminado")
+            detalle = f"{formato_producto(eliminado, 'ANTES')}\nDESPUÉS\n  producto eliminado"
+            guardar_historial("eliminar", "ok", detalle)
             return {"mensaje": "Producto eliminado", "producto": eliminado}
     guardar_historial("eliminar", "error", "producto no existe")
     return {"error": "Producto no existe"}
